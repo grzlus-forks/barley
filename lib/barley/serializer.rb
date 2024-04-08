@@ -2,10 +2,10 @@
 
 module Barley
   class Serializer
-    attr_accessor :object
+    attr_accessor :object, :context
 
     class << self
-      attr_accessor :defined_attributes
+      attr_accessor :defined_attributes, :optional_attributes
 
       # Defines attributes for the serializer
       #
@@ -71,8 +71,9 @@ module Barley
       # @param key [Symbol] the attribute name
       # @param key_name [Symbol] the key name in the hash
       # @param type [Dry::Types] the type to use, or coerce the value to
+      # @param optional [Boolean] if this value is omitted if null
       # @param block [Proc] a block to use to compute the value
-      def attribute(key, key_name: nil, type: nil, &block)
+      def attribute(key, key_name: nil, type: nil, optional: false, &block)
         key_name ||= key
         define_method(key_name) do
           value = block ? instance_eval(&block) : object.send(key)
@@ -80,6 +81,7 @@ module Barley
         end
 
         self.defined_attributes = (defined_attributes || []) << key_name
+        self.optional_attributes = (optional_attributes || []) << key_name
       end
 
       # Defines a single association for the serializer
@@ -192,9 +194,10 @@ module Barley
     # @param object [Object] the object to serialize
     # @param cache [Boolean, Hash<Symbol, ActiveSupport::Duration>] a boolean to cache the result, or a hash with options for the cache
     # @param root [Boolean] whether to include the root key in the hash
-    def initialize(object, cache: false, root: false)
+    def initialize(object, cache: false, root: false, context: OpenStruct.new)
       @object = object
       @root = root
+      @context = context
       @cache, @expires_in = if cache.is_a?(Hash)
         [true, cache[:expires_in]]
       else
@@ -254,7 +257,8 @@ module Barley
       raise Barley::Error, "No attribute or relation defined in #{self.class}" if defined_attributes.blank?
 
       hash = defined_attributes.each_with_object({}) do |key, result|
-        result[key] = send(key)
+        value = send(key)
+        result[key] = value if value.present? || !Array.wrap(self.class.optional_attributes).include?(key)
       end
       @root ? {root_key => hash} : hash
     end

@@ -7,3 +7,7 @@ one:
 two:
   email: jane.doe@email.com
   profile: two
+
+empty_email:
+  email:
+  profile: one

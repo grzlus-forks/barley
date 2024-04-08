@@ -2,6 +2,7 @@ require "barley/version"
 require "barley/railtie"
 require "barley/configuration"
 require "dry-types"
+require "ostruct"
 
 module Barley
   mattr_accessor :config

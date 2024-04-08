@@ -29,7 +29,7 @@ module Barley
       mock = Minitest::Mock.new
       serializer_mock = Minitest::Mock.new
       mock.expect(:class, mock)
-      mock.expect(:new, serializer_mock, [model], cache: false, root: false)
+      mock.expect(:new, serializer_mock, [model], cache: false, root: false, context: OpenStruct.new)
       serializer_mock.expect(:serializable_hash, {}, [])
 
       model.stub(:serializer, mock) do
@@ -55,7 +55,7 @@ module Barley
       mock = Minitest::Mock.new
       serializer_mock = Minitest::Mock.new
       mock.expect(:class, mock)
-      mock.expect(:new, serializer_mock, [model], cache: true, root: false)
+      mock.expect(:new, serializer_mock, [model], cache: true, root: false, context: OpenStruct.new)
       serializer_mock.expect(:serializable_hash, {}, [])
 
       model.stub(:serializer, mock) do
@@ -71,7 +71,7 @@ module Barley
       mock = Minitest::Mock.new
       serializer_mock = Minitest::Mock.new
       mock.expect(:class, mock)
-      mock.expect(:new, serializer_mock, [model], cache: {expires_in: 1.hour}, root: false)
+      mock.expect(:new, serializer_mock, [model], cache: {expires_in: 1.hour}, root: false, context: OpenStruct.new)
       serializer_mock.expect(:serializable_hash, {}, [])
 
       model.stub(:serializer, mock) do
@@ -87,11 +87,27 @@ module Barley
       mock = Minitest::Mock.new
       serializer_mock = Minitest::Mock.new
       mock.expect(:class, mock)
-      mock.expect(:new, serializer_mock, [model], cache: false, root: true)
+      mock.expect(:new, serializer_mock, [model], cache: false, root: true, context: OpenStruct.new)
       serializer_mock.expect(:serializable_hash, {}, [])
 
       model.stub(:serializer, mock) do
         model.as_json(root: true)
+      end
+
+      mock.verify
+      serializer_mock.verify
+    end
+
+    test "as_json with context calls the serializer with context" do
+      model = @model.new
+      mock = Minitest::Mock.new
+      serializer_mock = Minitest::Mock.new
+      mock.expect(:class, mock)
+      mock.expect(:new, serializer_mock, [model], cache: false, root: false, context: OpenStruct.new(current_user: :some_user))
+      serializer_mock.expect(:serializable_hash, {}, [])
+
+      model.stub(:serializer, mock) do
+        model.as_json(context: {current_user: :some_user})
       end
 
       mock.verify

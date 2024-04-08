@@ -64,8 +64,9 @@ module Barley
         serializer = options[:serializer] || self.serializer.class
         cache = options[:cache] || false
         root = options[:root] || false
+        context = OpenStruct.new(options[:context])
         begin
-          serializer.new(self, cache: cache, root: root).serializable_hash
+          serializer.new(self, cache: cache, root: root, context: context).serializable_hash
         rescue NameError
           raise Barley::Error, "Could not find serializer for #{self}. Please define a #{serializer} class."
         end

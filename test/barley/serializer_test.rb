@@ -31,6 +31,15 @@ module Barley
       assert_equal({id: @user.id, email: @user.email}, serializer.new(@user).serializable_hash)
     end
 
+    test "it serializes a model with a custom serializer but skips optional attribute" do
+      user = users(:empty_email)
+      serializer = Class.new(Barley::Serializer) do
+        attribute :id
+        attribute :email, optional: true
+      end
+      assert_equal({id: user.id}, serializer.new(user).serializable_hash)
+    end
+
     test "it serializes a model with a custom serializer and cache" do
       serializer = Class.new(Barley::Serializer) do
         attributes :id, :email
